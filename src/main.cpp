@@ -30,6 +30,9 @@
 #include <vector>
 #include <iostream>
 
+#include "utils/point_cloud_utils.h"
+#include "utils/image_filtering.h"
+
 using namespace geometrycentral;
 using namespace geometrycentral::surface;
 using namespace geometrycentral::pointcloud;
@@ -41,6 +44,7 @@ std::unique_ptr<CornerData<Vector2>> texCoords;
 
 std::unique_ptr<PointCloud> cloud;
 std::unique_ptr<PointPositionGeometry> cloudGeometry;
+PointData<Vector2> cloudTexCoords;
 
 // == Image data
 cv::Mat textureImage;
@@ -57,6 +61,10 @@ float param1 = 42.0;
 float rCoef = 0.01;
 int kCandidates = 30;
 bool showSampling = false;
+
+//Gaussian param
+float sigmaSpatial = 0.1;
+float maxDistance = 0.2;
 
 std::unique_ptr<PointCloudHeatSolver> phsolver;
 
@@ -77,29 +85,47 @@ void doWork() {
 void sampleMesh() {
     polyscope::warning("Sampling mesh");
 
+    //Free the previous point cloud
+    cloud.reset();
+    cloudGeometry.reset();
+    phsolver.reset();
+
+    //clear previous point cloud visualization
+    if(psCloud) {
+        polyscope::removePointCloud("Sampled Points");
+        psCloud = nullptr;
+    }
+    
+
     // Assuming `mesh` and `geometry` are already defined and initialized
     PoissonDiskSampler pds(*mesh, *geometry);
     std::vector<SurfacePoint> samples = pds.sample(rCoef, kCandidates);
 
     // Container to hold the 3D positions of the samples
     std::vector<Vector3> samplePositions;
+    std::vector<Vector2> sampleUVs;
+
+    std::vector<FaceStructure> faceStructures = generateFaceStructures(*mesh, *geometry, *texCoords);
 
     // Convert SurfacePoints to 3D positions
     for (SurfacePoint p : samples) {
-        if(p.face == Face()) continue; // skip invalid points (e.g. on non-manifold vertices
+        if (p.face == Face()) continue; // skip invalid points (e.g. on non-manifold vertices)
         Vector3 pos = p.interpolate(geometry->vertexPositions);
-        //get uv coordinates
-        //TODO: implement this
         samplePositions.push_back(pos);
+        FaceStructure fs = getFaceStructure(p, faceStructures);
+        Vector2 uv = interpolateTextureCoordinates(fs, pos);
+        sampleUVs.push_back(uv);
     }
 
     auto pCloud = std::make_unique<PointCloud>(samplePositions.size());
     std::cout << pCloud->nPoints() << std::endl;
 
     PointData<Vector3> pointPos(*pCloud);
+    PointData<Vector2> pointUVs(*pCloud);
 
     for(size_t i = 0; i < samplePositions.size(); i++) {
         pointPos[pCloud->point(i)] = samplePositions[i];
+        pointUVs[pCloud->point(i)] = sampleUVs[i];
     }
 
     auto pCloudGeometry = std::make_unique<PointPositionGeometry>(*pCloud, pointPos);
@@ -108,14 +134,9 @@ void sampleMesh() {
     cloud = std::move(pCloud);
     cloudGeometry = std::move(pCloudGeometry);
     phsolver = std::move(phsolver1);
-
-    // PointData<double> distances = phsolver.computeDistance(pCloud.point(0));
-
-    // Add the samples to the visualization as a point cloud
-    // polyscope::registerPointCloud("Sampled Points", samplePositions);
+    cloudTexCoords = std::move(pointUVs);
 
     psCloud = polyscope::registerPointCloud("Sampled Points", pointPos);
-    // psCloud->addScalarQuantity("Geodesic Distance", distances);
 
     // Show the visualization
     polyscope::show();
@@ -128,14 +149,26 @@ void computeGeodesicsForPoint(int pointId) {
     polyscope::show();
 }
 
+void outputUVForPoint(int pointId) {
+    Vector2 uv = cloudTexCoords[cloud->point(pointId)];
+    std::cout << "UV for point " << pointId << ": " << uv.x << ", " << uv.y << std::endl;
+}
+
+void displayImage() {
+    cv::imshow("Texture Image", textureImage);
+    cv::waitKey(0);
+}
+
+void gaussianFilterImage() {
+    cv::Mat image = textureImage.clone();
+    cv::Mat filteredImage = applyGaussianFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, sigmaSpatial, maxDistance);
+    cv::imshow("Filtered Image", filteredImage);
+    cv::imwrite("filtered_image.jpg", filteredImage);
+    cv::waitKey(0);
+}
+
 
 void myCallback() {
-
-    ImGui::SliderFloat("rCoef", &rCoef, 0.f, 0.1f);
-    ImGui::SliderInt("kCandidates", &kCandidates, 1, 100);
-    if (ImGui::Button("sample mesh")) {
-        sampleMesh();
-    }
 
     if(ImGui::Button("Output texture coordinates")) {
         for(Corner c : mesh->corners()) {
@@ -149,6 +182,16 @@ void myCallback() {
         }
     }
 
+    ImGui::Separator();
+    ImGui::Text("Sampling parameters, recommended values: \nrCoef = 0.01, kCandidates = 30");
+    ImGui::InputFloat("rCoef", &rCoef);
+    ImGui::SliderInt("kCandidates", &kCandidates, 1, 100);
+    if (ImGui::Button("sample mesh")) {
+        sampleMesh();
+    }
+
+    ImGui::Separator();
+    ImGui::Text("After sampling:");
     ImGui::InputInt("Point ID", &pointIndex);
     if(ImGui::Button("Compute geodesic distance")) {
         //If psCloud is not initialized, warn and return
@@ -162,6 +205,32 @@ void myCallback() {
             return;
         }
         computeGeodesicsForPoint(pointIndex);
+    }
+
+    if(ImGui::Button("Output UV")) {
+        //If psCloud is not initialized, warn and return
+        if(!psCloud) {
+            polyscope::warning("Point cloud not initialized, sample the mesh first");
+            return;
+        }
+        //if pointIndex is out of bounds, warn and return
+        if(pointIndex < 0 ||  pointIndex >= (int) cloud->nPoints()) {
+            polyscope::warning("Point index out of bounds");
+            return;
+        }
+        outputUVForPoint(pointIndex);
+    }
+
+    ImGui::InputFloat("sigmaSpatial", &sigmaSpatial);
+    ImGui::InputFloat("maxDistance", &maxDistance);
+    if(ImGui::Button("Gaussian filter image")) {
+        gaussianFilterImage();
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Display texture image");
+    if (ImGui::Button("Display Image")) {
+        displayImage();
     }
 }
 

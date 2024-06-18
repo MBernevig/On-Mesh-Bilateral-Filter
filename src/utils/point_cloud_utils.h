@@ -15,6 +15,8 @@
 
 #include "geometrycentral/surface/direction_fields.h"
 
+#include <tuple>
+
 #include "Eigen/Core"
 
 using namespace geometrycentral;
@@ -112,7 +114,7 @@ PointStructure generatePointStructure(SurfacePoint sp, const VertexPositionGeome
  * @param texCoords Texture coordinates data for corners.
  * @return List of generated face structures.
  */
-std::vector<FaceStructure> generateFaceStructures(ManifoldSurfaceMesh* mesh, VertexPositionGeometry* geometry, CornerData<Vector2>* texCoords);
+std::vector<FaceStructure> generateFaceStructures(ManifoldSurfaceMesh& mesh, VertexPositionGeometry& geometry, CornerData<Vector2>& texCoords);
 
 /**
  * @brief Get the 3D position from 2D texture coordinates and a face structure.

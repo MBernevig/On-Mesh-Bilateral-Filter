@@ -69,14 +69,14 @@ PointStructure generatePointStructure(SurfacePoint sp, const VertexPositionGeome
     return ps;
 }
 
-std::vector<FaceStructure> generateFaceStructures(ManifoldSurfaceMesh* mesh, VertexPositionGeometry* geometry, CornerData<Vector2>* texCoords) {
+std::vector<FaceStructure> generateFaceStructures(ManifoldSurfaceMesh& mesh, VertexPositionGeometry& geometry, CornerData<Vector2>& texCoords) {
     std::vector<FaceStructure> faceStructures;
-    for (Face f : mesh->faces()) {
+    for (Face f : mesh.faces()) {
         Halfedge he = f.halfedge();
         Corner c0 = he.corner();
         Corner c1 = he.next().corner();
         Corner c2 = he.next().next().corner();
-        FaceStructure fs = generateFaceStructure(c0, c1, c2, *geometry, *texCoords);
+        FaceStructure fs = generateFaceStructure(c0, c1, c2, geometry, texCoords);
         faceStructures.push_back(fs);
     }
     return faceStructures;
@@ -92,11 +92,58 @@ Point getClosestPoint(Vector3 p, PointCloud& cloud, PointPositionGeometry& geome
     double minDist = std::numeric_limits<double>::max();
     Point closestPoint;
     for (Point point : cloud.points()) {
-        double dist = norm(geometry[point] - p);
+        double dist = norm(geometry.positions[point] - p);
         if (dist < minDist) {
             minDist = dist;
             closestPoint = point;
         }
     }
+
+    // std::cout<<"Closest Point to "<<p<<" is "<<geometry.positions[closestPoint]<<std::endl;
+
+    // if(minDist > 0.012) {
+    //     std::cout<<"Closest Point to "<<p<<" is "<<geometry.positions[closestPoint]<<" at distance: "<<minDist<<std::endl;
+    // }
     return closestPoint;
 }
+
+
+
+// std::tuple<PointCloud, PointPositionGeometry, PointData<Vector2>> populatePointCloud(std::vector<SurfacePoint> sps, ManifoldSurfaceMesh* mesh, VertexPositionGeometry* meshGeom, CornerData<Vector2>* texCoords) {
+//     std::vector<FaceStructure> faceStructures = generateFaceStructures(mesh, meshGeom, texCoords);
+
+//     std::vector<Vector3> samplePositions;
+//     std::vector<Vector2> sampleUVs;
+//     for (SurfacePoint p : sps) {
+//         if (p.face == Face()) continue; // skip invalid points (e.g. on non-manifold vertices)
+//         Vector3 pos = p.interpolate(meshGeom->vertexPositions);
+//         samplePositions.push_back(pos);
+//         FaceStructure fs = getFaceStructure(p, faceStructures);
+//         Vector2 uv = interpolateTextureCoordinates(fs, pos);
+//         sampleUVs.push_back(uv);
+//     }
+
+//     // Create a new PointCloud with the correct number of points
+//     PointCloud cloud(samplePositions.size());
+
+//     // Initialize PointData for positions and UVs
+//     PointData<Vector3> pointPos(cloud);
+//     PointData<Vector2> pointUVs(cloud);
+
+//     for (size_t i = 0; i < samplePositions.size(); i++) {
+//         pointPos[cloud.point(i)] = samplePositions[i];
+//         pointUVs[cloud.point(i)] = sampleUVs[i];
+//     }
+
+//     // Create PointPositionGeometry and PointData for UVs
+//     PointPositionGeometry cloudGeom(cloud, pointPos);
+//     PointData<Vector2> uvs(cloud);
+
+//     for (size_t i = 0; i < sampleUVs.size(); i++) {
+//         uvs[cloud.point(i)] = sampleUVs[i];
+//     }
+
+//     std::cout << "Point cloud populated" << std::endl;
+
+//     return std::make_tuple(std::move(cloud), std::move(cloudGeom), std::move(uvs));
+// }
