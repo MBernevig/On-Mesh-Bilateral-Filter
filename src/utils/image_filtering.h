@@ -27,4 +27,6 @@ void processFaceStructure(cv::Mat& image, cv::Mat& result, FaceStructure fs, Poi
 
 cv::Mat applyGaussianFilterForMesh(cv::Mat& image, ManifoldSurfaceMesh& mesh, VertexPositionGeometry& geometry, CornerData<Vector2>& texCoords, PointCloud& pCloud, PointPositionGeometry& geom, PointData<Vector2>& uvs, double sigmaSpatial, double maxDistance);
 
+cv::Mat applyBilateralFilterForMesh(cv::Mat& image, ManifoldSurfaceMesh& mesh, VertexPositionGeometry& geometry, CornerData<Vector2>& texCoords, PointCloud& pCloud, PointPositionGeometry& geom, PointData<Vector2>& uvs, double sigmaSpatial, double maxDistance, double sigmaRange);
+
 #endif // IMAGE_FILTERING_H

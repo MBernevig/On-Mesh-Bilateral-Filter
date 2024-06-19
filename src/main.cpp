@@ -63,8 +63,9 @@ int kCandidates = 30;
 bool showSampling = false;
 
 //Gaussian param
-float sigmaSpatial = 0.1;
-float maxDistance = 0.2;
+double sigmaSpatial = 0.01;
+double maxDistance = 0.15;
+double sigmaRange = 70;
 
 std::unique_ptr<PointCloudHeatSolver> phsolver;
 
@@ -167,6 +168,21 @@ void gaussianFilterImage() {
     cv::waitKey(0);
 }
 
+//takes around 25 mins for 12 face and 65k samples 256x256 texture
+void bilateralFilterImage() {
+    cv::Mat image = textureImage.clone();
+    for(double i = 0.0; i<=0.100; i+=0.01) {
+        cv::Mat filteredImage = applyBilateralFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, i, maxDistance, sigmaRange);
+        cv::imwrite("bilateral_filtered_image_" + std::to_string(i*100) + ".jpg", filteredImage);
+        // cv::Mat filteredImage2 = applyGaussianFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, i, maxDistance);
+        // cv::imwrite("gaussian_filtered_image_" + std::to_string(i*100) + ".jpg", filteredImage2);
+    }
+    // cv::Mat filteredImage = applyBilateralFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, sigmaSpatial, maxDistance, sigmaRange);
+    // cv::imshow("Filtered Image", filteredImage);
+    // cv::imwrite("bilateral_filtered_image.jpg", filteredImage);
+    // cv::waitKey(0);
+}
+
 
 void myCallback() {
 
@@ -221,10 +237,15 @@ void myCallback() {
         outputUVForPoint(pointIndex);
     }
 
-    ImGui::InputFloat("sigmaSpatial", &sigmaSpatial);
-    ImGui::InputFloat("maxDistance", &maxDistance);
+    ImGui::InputDouble("sigmaSpatial", &sigmaSpatial);
+    ImGui::InputDouble("maxDistance", &maxDistance);
     if(ImGui::Button("Gaussian filter image")) {
         gaussianFilterImage();
+    }
+
+    ImGui::InputDouble("sigmaRange", &sigmaRange);
+    if(ImGui::Button("Bilateral filter image")) {
+        bilateralFilterImage();
     }
 
     ImGui::Separator();

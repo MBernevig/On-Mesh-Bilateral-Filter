@@ -163,3 +163,115 @@ cv::Mat applyGaussianFilterForMesh(cv::Mat& image, ManifoldSurfaceMesh& mesh, Ve
 
 
 // }
+
+double rangeWeight(double distance, double sigmaSpatial, double sigmaRange) {
+    return exp(-(distance*distance) / (2 * sigmaSpatial * sigmaSpatial));
+}
+
+cv::Vec3b applyBilateralForTexel(const cv::Mat& image, cv::Point& p, Vector3& pos, PointCloud& pCloud, PointPositionGeometry& geom, PointData<Vector2>& uvs, PointCloudHeatSolver& phsolver, double sigmaSpatial, double maxDistance, double sigmaRange) {
+    Point closestPoint = getClosestPoint(pos, pCloud, geom);
+
+    PointData<double> distances = phsolver.computeDistance(closestPoint);
+
+    cv::Vec3b imageColor = image.at<cv::Vec3b>(p);
+    double initialWeight = gaussianWeight(0, sigmaSpatial);
+
+    Vector3 color = Vector3{imageColor[0], imageColor[1], imageColor[2]} * initialWeight;
+
+    // std::cout<<"Image Color:"<<imageColor<<std::endl;
+    // std::cout<<"Initial Color:"<<color<<std::endl;
+
+    double totalWeight = initialWeight;
+
+    for(Point p : pCloud.points()) {
+        //Discard if over distance
+        if(distances[p] > maxDistance) {
+            continue;
+        }
+        double d = distances[p];
+        double weight = gaussianWeight(d, sigmaSpatial);
+        Vector2 uv = uvs[p];
+
+        cv::Point pixel = uvToPixel(uv, image);
+        cv::Vec3b texelColor = image.at<cv::Vec3b>(pixel);
+
+        double colorDistance = sqrt(pow(texelColor[0] - imageColor[0], 2) + pow(texelColor[1] - imageColor[1], 2) + pow(texelColor[2] - imageColor[2], 2));
+        double rangeWeightValue = rangeWeight(colorDistance, sigmaSpatial, sigmaRange);
+
+        weight *= rangeWeightValue;
+
+
+        Vector3 pixelColor = Vector3{texelColor[0], texelColor[1], texelColor[2]};
+
+        color += pixelColor * weight;
+        totalWeight += weight;
+
+
+        // std::cout<<"Weight:"<<weight<<std::endl;
+        // std::cout<<"Pixel Color:"<<pixelColor<<std::endl;
+        // std::cout<<"Color:"<<color<<std::endl;
+        // std::cout<<"Total Weight:"<<totalWeight<<std::endl;
+
+    }
+
+    // std::cout<<"Final Color:"<<color<<std::endl;
+    // std::cout<<"Final Total Weight:"<<totalWeight<<std::endl;
+    // std::cout<<"Final Color/Total Weight:"<<color / totalWeight<<std::endl;
+
+    Vector3 finalColor = color / totalWeight;
+
+    //clamp the values
+    finalColor.x = std::min(255.0, std::max(0.0, finalColor.x));
+    finalColor.y = std::min(255.0, std::max(0.0, finalColor.y));
+    finalColor.z = std::min(255.0, std::max(0.0, finalColor.z));
+
+    //convert to cv::Vec3b
+    cv::Vec3b result = cv::Vec3b{finalColor.x, finalColor.y, finalColor.z};
+
+    // std::cout<<"Result:"<<result<<std::endl;
+
+    return result;
+}
+
+void processFaceStructureBilateral(cv::Mat& image, cv::Mat& result, FaceStructure fs, PointCloud& pCloud, PointPositionGeometry& geom, PointData<Vector2>& uvs, PointCloudHeatSolver& phsolver, double sigmaSpatial, double maxDistance, double sigmaRange) {
+    cv::Point min, max;
+
+    // std::cout<<"Point Cloud Size:"<<pCloud.nPoints()<<std::endl;
+
+    std::tie(min, max) = boundingBox(fs, image);
+
+    cv::Point pv0 = uvToPixel(fs.t0, image);
+    cv::Point pv1 = uvToPixel(fs.t1, image);
+    cv::Point pv2 = uvToPixel(fs.t2, image);
+
+    Vector2 v0 = Vector2{pv0.x,pv0.y};
+    Vector2 v1 = Vector2{pv1.x,pv1.y};
+    Vector2 v2 = Vector2{pv2.x,pv2.y};
+
+    for(int i = min.x; i <= max.x; i++) {
+        for(int j = min.y; j <= max.y; j++) {
+            cv::Point p(i, j);
+
+            if(isInTriangle(Vector2{(double)i,(double)j}, v0, v1, v2)) {
+                Vector3 pos = get3DPosition(pixelToUV(p, image), fs);
+                cv::Vec3b color = applyBilateralForTexel(image, p, pos, pCloud, geom, uvs, phsolver, sigmaSpatial, maxDistance, sigmaRange);
+                result.at<cv::Vec3b>(p) = color;
+            }
+        }
+    }
+}
+
+cv::Mat applyBilateralFilterForMesh(cv::Mat& image, ManifoldSurfaceMesh& mesh, VertexPositionGeometry& geometry, CornerData<Vector2>& texCoords, PointCloud& pCloud, PointPositionGeometry& geom, PointData<Vector2>& uvs, double sigmaSpatial, double maxDistance, double sigmaRange) {
+    std::vector<FaceStructure> faceStructures = generateFaceStructures(mesh, geometry, texCoords);
+    PointCloudHeatSolver phsolver(pCloud, geom);
+    cv::Mat result = image.clone();
+
+    for(FaceStructure fs : faceStructures) {
+        processFaceStructureBilateral(image, result, fs, pCloud, geom, uvs, phsolver, sigmaSpatial, maxDistance, sigmaRange);
+        std::cout<<"Processed face: "<<fs.t0<<" "<<fs.t1<<" "<<fs.t2<<std::endl;
+    }
+
+    // processFaceStructure(image, result, faceStructures[0], pCloud, geom, uvs, phsolver, sigmaSpatial, maxDistance);
+
+    return result;
+}
