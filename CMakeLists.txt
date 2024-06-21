@@ -84,6 +84,9 @@ set(SRCS
 
 
 # To change the name of your executable, change "gc_project" in the lines below to whatever you want
+
+set(PROJECT_NAME gc_project)
+
 add_executable(gc_project "${SRCS}")
 target_include_directories(gc_project PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 # add the args.hxx project which we use for command line args

@@ -2,7 +2,7 @@
 
 
 
-float gaussianWeight(float distance, float sigma) {
+float spatialWeight(float distance, float sigma) {
     return exp(-(distance*distance) / (2 * sigma * sigma));
 }
 
@@ -58,7 +58,7 @@ cv::Vec3b applyGaussianForTexel(const cv::Mat& image, cv::Point& p, Vector3& pos
     PointData<double> distances = phsolver.computeDistance(closestPoint);
 
     cv::Vec3b imageColor = image.at<cv::Vec3b>(p);
-    double initialWeight = gaussianWeight(0, sigmaSpatial);
+    double initialWeight = spatialWeight(0, sigmaSpatial);
 
     Vector3 color = Vector3{imageColor[0], imageColor[1], imageColor[2]} * initialWeight;
 
@@ -72,8 +72,12 @@ cv::Vec3b applyGaussianForTexel(const cv::Mat& image, cv::Point& p, Vector3& pos
         if(distances[p] > maxDistance) {
             continue;
         }
+        //Closest point was already processed
+        if(p == closestPoint) {
+            continue;
+        }
         double d = distances[p];
-        double weight = gaussianWeight(d, sigmaSpatial);
+        double weight = spatialWeight(d, sigmaSpatial);
         Vector2 uv = uvs[p];
 
         cv::Point pixel = uvToPixel(uv, image);
@@ -164,8 +168,8 @@ cv::Mat applyGaussianFilterForMesh(cv::Mat& image, ManifoldSurfaceMesh& mesh, Ve
 
 // }
 
-double rangeWeight(double distance, double sigmaSpatial, double sigmaRange) {
-    return exp(-(distance*distance) / (2 * sigmaSpatial * sigmaSpatial));
+double rangeWeight(double distance, double sigmaRange) {
+    return exp(-(distance*distance) / (2 * sigmaRange * sigmaRange));
 }
 
 cv::Vec3b applyBilateralForTexel(const cv::Mat& image, cv::Point& p, Vector3& pos, PointCloud& pCloud, PointPositionGeometry& geom, PointData<Vector2>& uvs, PointCloudHeatSolver& phsolver, double sigmaSpatial, double maxDistance, double sigmaRange) {
@@ -174,7 +178,7 @@ cv::Vec3b applyBilateralForTexel(const cv::Mat& image, cv::Point& p, Vector3& po
     PointData<double> distances = phsolver.computeDistance(closestPoint);
 
     cv::Vec3b imageColor = image.at<cv::Vec3b>(p);
-    double initialWeight = gaussianWeight(0, sigmaSpatial);
+    double initialWeight = spatialWeight(0, sigmaSpatial) * rangeWeight(0, sigmaRange);
 
     Vector3 color = Vector3{imageColor[0], imageColor[1], imageColor[2]} * initialWeight;
 
@@ -188,8 +192,12 @@ cv::Vec3b applyBilateralForTexel(const cv::Mat& image, cv::Point& p, Vector3& po
         if(distances[p] > maxDistance) {
             continue;
         }
+        //Closest point was already processed
+        if(p == closestPoint) {
+            continue;
+        }
         double d = distances[p];
-        double weight = gaussianWeight(d, sigmaSpatial);
+        double weight = spatialWeight(d, sigmaSpatial);
         Vector2 uv = uvs[p];
 
         cv::Point pixel = uvToPixel(uv, image);

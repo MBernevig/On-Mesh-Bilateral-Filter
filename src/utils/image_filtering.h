@@ -9,7 +9,7 @@
 #include <thread>
 
 // Function declarations
-float gaussianWeight(float distance, float sigma);
+float spatialWeight(float distance, float sigma);
 
 cv::Point uvToPixel(const Vector2& uv, const cv::Mat& image);
 
