@@ -29,6 +29,7 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <filesystem>
 
 #include "utils/point_cloud_utils.h"
 #include "utils/image_filtering.h"
@@ -81,6 +82,21 @@ void doWork() {
     psMesh->addVertexScalarQuantity("curvature",
                                     geometry->vertexGaussianCurvatures,
                                     polyscope::DataType::SYMMETRIC);
+}
+
+std::string getNextAvailableFileName(const std::string& baseName) {
+    // namespace fs = std::filesystem;
+
+    std::filesystem::path currentDir = std::filesystem::current_path();
+    int counter = 0;
+    std::string nextFileName = baseName;
+
+    while (std::filesystem::exists(currentDir / nextFileName)) {
+        counter++;
+        nextFileName = baseName + std::to_string(counter);
+    }
+
+    return nextFileName;
 }
 
 void sampleMesh() {
@@ -164,23 +180,25 @@ void gaussianFilterImage() {
     cv::Mat image = textureImage.clone();
     cv::Mat filteredImage = applyGaussianFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, sigmaSpatial, maxDistance);
     cv::imshow("Filtered Image", filteredImage);
-    cv::imwrite("filtered_image.jpg", filteredImage);
+    // std::string filename = getNextAvailableFileName("gaussian_filtered_image.jpg");
+    cv::imwrite("gaussian_image.jpg", filteredImage);
     cv::waitKey(0);
 }
 
 //takes around 25 mins for 12 face and 65k samples 256x256 texture
 void bilateralFilterImage() {
     cv::Mat image = textureImage.clone();
-    for(double i = 0.0; i<=0.100; i+=0.01) {
-        cv::Mat filteredImage = applyBilateralFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, i, maxDistance, sigmaRange);
-        cv::imwrite("bilateral_filtered_image_" + std::to_string(i*100) + ".jpg", filteredImage);
-        // cv::Mat filteredImage2 = applyGaussianFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, i, maxDistance);
-        // cv::imwrite("gaussian_filtered_image_" + std::to_string(i*100) + ".jpg", filteredImage2);
-    }
-    // cv::Mat filteredImage = applyBilateralFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, sigmaSpatial, maxDistance, sigmaRange);
-    // cv::imshow("Filtered Image", filteredImage);
-    // cv::imwrite("bilateral_filtered_image.jpg", filteredImage);
-    // cv::waitKey(0);
+    // for(double i = 0.0; i<=0.100; i+=0.01) {
+    //     cv::Mat filteredImage = applyBilateralFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, i, maxDistance, sigmaRange);
+    //     cv::imwrite("bilateral_filtered_image_" + std::to_string(i*100) + ".jpg", filteredImage);
+    //     // cv::Mat filteredImage2 = applyGaussianFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, i, maxDistance);
+    //     // cv::imwrite("gaussian_filtered_image_" + std::to_string(i*100) + ".jpg", filteredImage2);
+    // }
+    cv::Mat filteredImage = applyBilateralFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, sigmaSpatial, maxDistance, sigmaRange);
+    cv::imshow("Filtered Image", filteredImage);
+    // std::string filename = getNextAvailableFileName("bilateral_filtered_image.jpg");
+    cv::imwrite("bilat_image.jpg", filteredImage);
+    cv::waitKey(0);
 }
 
 
