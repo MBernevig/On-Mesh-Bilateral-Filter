@@ -204,7 +204,7 @@ cv::Vec3b applyBilateralForTexel(const cv::Mat& image, cv::Point& p, Vector3& po
         cv::Vec3b texelColor = image.at<cv::Vec3b>(pixel);
 
         double colorDistance = sqrt(pow(texelColor[0] - imageColor[0], 2) + pow(texelColor[1] - imageColor[1], 2) + pow(texelColor[2] - imageColor[2], 2));
-        double rangeWeightValue = rangeWeight(colorDistance, sigmaSpatial, sigmaRange);
+        double rangeWeightValue = rangeWeight(colorDistance, sigmaRange);
 
         weight *= rangeWeightValue;
 
