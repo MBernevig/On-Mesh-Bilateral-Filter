@@ -1,5 +1,8 @@
 # On-Mesh Bilateral Filter
-On-Mesh Bilateral Filter, created with [OpenCV](https://opencv.org/) [geometry-central](http://geometry-central.net/) and [Polyscope](http://polyscope.run/).
+On-Mesh Bilateral Filter, created with [OpenCV](https://opencv.org/), [geometry-central](http://geometry-central.net/) and [Polyscope](http://polyscope.run/).
+
+The code in this repository is the result of a research project conducted as part of CSE3000 at TUDelft.
+You can read more about this project in the research paper accompanying this code, at [On-Mesh Bilateral Filter: Bridging the gap between Texture and Object Space](google.com)
 
 
 ### Get the code
@@ -43,4 +46,18 @@ Modify the main file `src/main.cpp` to start implementing your own algorithms. `
 
 ## Templates used
 
-This project was built using the template [gc-polyscope-project-template](https://github.com/nmwsharp/gc-polyscope-project-template/tree/master).
+This project was built using the [gc-polyscope-project-template](https://github.com/nmwsharp/gc-polyscope-project-template/tree/master).
+
+## Additional Information
+
+Sampling the Mesh: The `sampleMesh` function samples points from the mesh using Poisson disk sampling, converts these points into 3D positions and corresponding UV coordinates, and visualizes them using Polyscope.
+
+Geodesic Distance Computation: The `computeGeodesicsForPoint` function calculates geodesic distances from a specified point in the point cloud and visualizes these distances using Polyscope.
+
+UV Coordinate Output: The `outputUVForPoint` function retrieves and prints the UV coordinates of a specified point in the point cloud.
+
+Image Display: The `displayImage` function displays the current texture image using OpenCV.
+
+Image Filtering: The `gaussianFilterImage` and `bilateralFilterImage` functions apply Gaussian and bilateral filters to the texture image respectively, displaying and saving the filtered images.
+
+For detailed information on these functions and more, refer to the source code in the repository.
