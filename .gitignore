@@ -40,3 +40,7 @@ tags
 *.exe
 *.out
 *.app
+
+# Include everything under input_data/
+!input_data/
+!input_data/**
