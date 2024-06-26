@@ -1,11 +1,14 @@
 # On-Mesh Bilateral Filter
+
 On-Mesh Bilateral Filter, created with [OpenCV](https://opencv.org/), [geometry-central](http://geometry-central.net/) and [Polyscope](http://polyscope.run/).
 
 The code in this repository is the result of a research project conducted as part of CSE3000 at TUDelft.
+
 You can read more about this project in the research paper accompanying this code, at [On-Mesh Bilateral Filter: Bridging the gap between Texture and Object Space](google.com)
 
 
 ### Get the code
+
 Clone the project 
 ```
 git clone https://github.com/MBernevig/On-Mesh-Bilateral-Filter.git
@@ -27,10 +30,12 @@ make -j6
 Install CMake, and use either the CMake GUI or the command line interface (as on unix) to generate a Visual Studio solution.  Build the solution with Visual Studio.
 
 **Dependencies**
+
 Several dependencies need to fulfilled for OpenCV, geometry-central and Polyscope. More information regarding these can be found on their respective websites. 
 CMake will warn you if a dependency is not fulfilled, and you can iteratively fix everything this way.
 
 ### Run the code
+
 ```
 ./bin/onmeshbf /path/to/a/mesh /path/to/a/texture
 ```
