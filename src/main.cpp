@@ -72,33 +72,14 @@ std::unique_ptr<PointCloudHeatSolver> phsolver;
 
 
 int pointIndex = 0;
-// Example computation function -- this one computes and registers a scalar
-// quantity
-void doWork() {
-    polyscope::warning("Computing Gaussian curvature.\nalso, parameter value = " +
-                       std::to_string(param1));
 
-    geometry->requireVertexGaussianCurvatures();
-    psMesh->addVertexScalarQuantity("curvature",
-                                    geometry->vertexGaussianCurvatures,
-                                    polyscope::DataType::SYMMETRIC);
-}
-
-std::string getNextAvailableFileName(const std::string& baseName) {
-    // namespace fs = std::filesystem;
-
-    std::filesystem::path currentDir = std::filesystem::current_path();
-    int counter = 0;
-    std::string nextFileName = baseName;
-
-    while (std::filesystem::exists(currentDir / nextFileName)) {
-        counter++;
-        nextFileName = baseName + std::to_string(counter);
-    }
-
-    return nextFileName;
-}
-
+/**
+ * @brief Samples points from a mesh using Poisson disk sampling and visualizes the result.
+ * 
+ * This function performs Poisson disk sampling on a mesh to generate a set of sample points. It then
+ * converts these sample points into 3D positions and corresponding UV coordinates. The points are stored
+ * in a point cloud and visualized using Polyscope.
+ */
 void sampleMesh() {
     polyscope::warning("Sampling mesh");
 
@@ -126,7 +107,7 @@ void sampleMesh() {
 
     // Convert SurfacePoints to 3D positions
     for (SurfacePoint p : samples) {
-        if (p.face == Face()) continue; // skip invalid points (e.g. on non-manifold vertices)
+        if (p.face == Face()) continue; // skip invalid points 
         Vector3 pos = p.interpolate(geometry->vertexPositions);
         samplePositions.push_back(pos);
         FaceStructure fs = getFaceStructure(p, faceStructures);
@@ -159,6 +140,16 @@ void sampleMesh() {
     polyscope::show();
 }
 
+
+
+/**
+ * @brief Computes geodesic distances from a specific point in the point cloud.
+ * 
+ * This function calculates the geodesic distances from a given point in the point cloud to all other
+ * points using the heat method. The distances are visualized as a scalar quantity in Polyscope.
+ * 
+ * @param pointId The ID of the point from which to compute geodesic distances.
+ */
 void computeGeodesicsForPoint(int pointId) {
     PointData<double> distances = phsolver->computeDistance(cloud->point(pointId));
 
@@ -166,16 +157,39 @@ void computeGeodesicsForPoint(int pointId) {
     polyscope::show();
 }
 
+
+/**
+ * @brief Outputs the UV coordinates of a specific point in the point cloud.
+ * 
+ * This function retrieves and prints the UV coordinates of a specified point in the point cloud.
+ * The UV coordinates are printed to the standard output.
+ * 
+ * @param pointId The ID of the point for which to output UV coordinates.
+ */
 void outputUVForPoint(int pointId) {
     Vector2 uv = cloudTexCoords[cloud->point(pointId)];
     std::cout << "UV for point " << pointId << ": " << uv.x << ", " << uv.y << std::endl;
 }
 
+
+/**
+ * @brief Displays the current texture image.
+ * 
+ * This function opens a window to display the current texture image using OpenCV.
+ * The window remains open until a key is pressed.
+ */
 void displayImage() {
     cv::imshow("Texture Image", textureImage);
     cv::waitKey(0);
 }
 
+
+/**
+ * @brief Applies a Gaussian filter to the texture image and displays the result.
+ * 
+ * This function applies a Gaussian filter to the texture image, using the specified parameters
+ * for the mesh and point cloud. The filtered image is displayed and saved to a file.
+ */
 void gaussianFilterImage() {
     cv::Mat image = textureImage.clone();
     cv::Mat filteredImage = applyGaussianFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, sigmaSpatial, maxDistance);
@@ -185,18 +199,19 @@ void gaussianFilterImage() {
     cv::waitKey(0);
 }
 
-//takes around 25 mins for 12 face and 65k samples 256x256 texture
+
+/**
+ * @brief Applies a bilateral filter to the texture image and displays the result.
+ * 
+ * This function applies a bilateral filter to the texture image, using the specified parameters
+ * for the mesh and point cloud. The filtered image is displayed and saved to a file. Note that
+ * this process can be time-consuming for large textures and many samples.
+ */
 void bilateralFilterImage() {
+    //takes around 25 mins for 12 face and 65k samples 256x256 texture
     cv::Mat image = textureImage.clone();
-    // for(double i = 0.0; i<=0.100; i+=0.01) {
-    //     cv::Mat filteredImage = applyBilateralFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, i, maxDistance, sigmaRange);
-    //     cv::imwrite("bilateral_filtered_image_" + std::to_string(i*100) + ".jpg", filteredImage);
-    //     // cv::Mat filteredImage2 = applyGaussianFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, i, maxDistance);
-    //     // cv::imwrite("gaussian_filtered_image_" + std::to_string(i*100) + ".jpg", filteredImage2);
-    // }
     cv::Mat filteredImage = applyBilateralFilterForMesh(image, *mesh, *geometry, *texCoords, *cloud, *cloudGeometry, cloudTexCoords, sigmaSpatial, maxDistance, sigmaRange);
     cv::imshow("Filtered Image", filteredImage);
-    // std::string filename = getNextAvailableFileName("bilateral_filtered_image.jpg");
     cv::imwrite("bilat_image.jpg", filteredImage);
     cv::waitKey(0);
 }
@@ -314,8 +329,6 @@ int main(int argc, char **argv) {
     // Set the callback function
     polyscope::state::userCallback = myCallback;
 
-    // Load mesh
-    // std::tie(mesh, geometry) = readManifoldSurfaceMesh(args::get(inputFilename));
     std::tie(mesh, geometry, texCoords) = readParameterizedManifoldSurfaceMesh(args::get(inputFilename));
 
     // Register the mesh with polyscope
@@ -323,19 +336,6 @@ int main(int argc, char **argv) {
         polyscope::guessNiceNameFromPath(args::get(inputFilename)),
         geometry->inputVertexPositions, mesh->getFaceVertexList(),
         polyscopePermutations(*mesh));
-
-    // Set vertex tangent spaces
-    // geometry->requireVertexTangentBasis();
-    // VertexData<Vector3> vBasisX(*mesh);
-    // VertexData<Vector3> vBasisY(*mesh);
-    // for (Vertex v : mesh->vertices()) {
-    //     vBasisX[v] = geometry->vertexTangentBasis[v][0];
-    //     vBasisY[v] = geometry->vertexTangentBasis[v][1];
-    // }
-
-    // auto vField =
-    //     geometrycentral::surface::computeSmoothestVertexDirectionField(*geometry);
-    // psMesh->addVertexTangentVectorQuantity("VF", vField, vBasisX, vBasisY);
 
     // Give control to the polyscope gui
     polyscope::show();

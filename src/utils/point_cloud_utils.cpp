@@ -98,52 +98,5 @@ Point getClosestPoint(Vector3 p, PointCloud& cloud, PointPositionGeometry& geome
             closestPoint = point;
         }
     }
-
-    // std::cout<<"Closest Point to "<<p<<" is "<<geometry.positions[closestPoint]<<std::endl;
-
-    // if(minDist > 0.012) {
-    //     std::cout<<"Closest Point to "<<p<<" is "<<geometry.positions[closestPoint]<<" at distance: "<<minDist<<std::endl;
-    // }
     return closestPoint;
 }
-
-
-
-// std::tuple<PointCloud, PointPositionGeometry, PointData<Vector2>> populatePointCloud(std::vector<SurfacePoint> sps, ManifoldSurfaceMesh* mesh, VertexPositionGeometry* meshGeom, CornerData<Vector2>* texCoords) {
-//     std::vector<FaceStructure> faceStructures = generateFaceStructures(mesh, meshGeom, texCoords);
-
-//     std::vector<Vector3> samplePositions;
-//     std::vector<Vector2> sampleUVs;
-//     for (SurfacePoint p : sps) {
-//         if (p.face == Face()) continue; // skip invalid points (e.g. on non-manifold vertices)
-//         Vector3 pos = p.interpolate(meshGeom->vertexPositions);
-//         samplePositions.push_back(pos);
-//         FaceStructure fs = getFaceStructure(p, faceStructures);
-//         Vector2 uv = interpolateTextureCoordinates(fs, pos);
-//         sampleUVs.push_back(uv);
-//     }
-
-//     // Create a new PointCloud with the correct number of points
-//     PointCloud cloud(samplePositions.size());
-
-//     // Initialize PointData for positions and UVs
-//     PointData<Vector3> pointPos(cloud);
-//     PointData<Vector2> pointUVs(cloud);
-
-//     for (size_t i = 0; i < samplePositions.size(); i++) {
-//         pointPos[cloud.point(i)] = samplePositions[i];
-//         pointUVs[cloud.point(i)] = sampleUVs[i];
-//     }
-
-//     // Create PointPositionGeometry and PointData for UVs
-//     PointPositionGeometry cloudGeom(cloud, pointPos);
-//     PointData<Vector2> uvs(cloud);
-
-//     for (size_t i = 0; i < sampleUVs.size(); i++) {
-//         uvs[cloud.point(i)] = sampleUVs[i];
-//     }
-
-//     std::cout << "Point cloud populated" << std::endl;
-
-//     return std::make_tuple(std::move(cloud), std::move(cloudGeom), std::move(uvs));
-// }

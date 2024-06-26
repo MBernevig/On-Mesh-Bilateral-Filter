@@ -214,17 +214,7 @@ cv::Vec3b applyBilateralForTexel(const cv::Mat& image, cv::Point& p, Vector3& po
         color += pixelColor * weight;
         totalWeight += weight;
 
-
-        // std::cout<<"Weight:"<<weight<<std::endl;
-        // std::cout<<"Pixel Color:"<<pixelColor<<std::endl;
-        // std::cout<<"Color:"<<color<<std::endl;
-        // std::cout<<"Total Weight:"<<totalWeight<<std::endl;
-
     }
-
-    // std::cout<<"Final Color:"<<color<<std::endl;
-    // std::cout<<"Final Total Weight:"<<totalWeight<<std::endl;
-    // std::cout<<"Final Color/Total Weight:"<<color / totalWeight<<std::endl;
 
     Vector3 finalColor = color / totalWeight;
 
@@ -236,15 +226,12 @@ cv::Vec3b applyBilateralForTexel(const cv::Mat& image, cv::Point& p, Vector3& po
     //convert to cv::Vec3b
     cv::Vec3b result = cv::Vec3b{finalColor.x, finalColor.y, finalColor.z};
 
-    // std::cout<<"Result:"<<result<<std::endl;
-
     return result;
 }
 
 void processFaceStructureBilateral(cv::Mat& image, cv::Mat& result, FaceStructure fs, PointCloud& pCloud, PointPositionGeometry& geom, PointData<Vector2>& uvs, PointCloudHeatSolver& phsolver, double sigmaSpatial, double maxDistance, double sigmaRange) {
     cv::Point min, max;
 
-    // std::cout<<"Point Cloud Size:"<<pCloud.nPoints()<<std::endl;
 
     std::tie(min, max) = boundingBox(fs, image);
 
@@ -278,8 +265,6 @@ cv::Mat applyBilateralFilterForMesh(cv::Mat& image, ManifoldSurfaceMesh& mesh, V
         processFaceStructureBilateral(image, result, fs, pCloud, geom, uvs, phsolver, sigmaSpatial, maxDistance, sigmaRange);
         std::cout<<"Processed face: "<<fs.t0<<" "<<fs.t1<<" "<<fs.t2<<std::endl;
     }
-
-    // processFaceStructure(image, result, faceStructures[0], pCloud, geom, uvs, phsolver, sigmaSpatial, maxDistance);
 
     return result;
 }
