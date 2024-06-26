@@ -32,6 +32,10 @@ CMake will warn you if a dependency is not fulfilled, and you can iteratively fi
 ./bin/onmeshbf /path/to/a/mesh /path/to/a/texture
 ```
 
+A new window should appear where you can see the mesh you loaded. 
+You should now sample your mesh, choose appropriate spatial and range sigma values, then filter your texture image. 
+The filtered texture image will appear on screen once the filtering process is finished.
+
 ### Edit the code
 
 Modify the main file `src/main.cpp` to start implementing your own algorithms. `CMakeLists.txt` contains a few comments for adding additional files.  
