@@ -4,7 +4,7 @@ On-Mesh Bilateral Filter, created with [OpenCV](https://opencv.org/), [geometry-
 
 The code in this repository is the result of a research project conducted as part of CSE3000 at TUDelft.
 
-You can read more about this project in the research paper accompanying this code, at [On-Mesh Bilateral Filter: Bridging the gap between Texture and Object Space](google.com)
+You can read more about this project in the research paper accompanying this code, at [On-Mesh Bilateral Filter: Bridging the gap between Texture and Object Space](https://resolver.tudelft.nl/uuid:998d1a03-af18-4628-ba5c-aa654f154622)
 
 
 ### Get the code
