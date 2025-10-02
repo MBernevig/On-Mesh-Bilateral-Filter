@@ -220,12 +220,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **[OpenCV](https://opencv.org/)** - Comprehensive computer vision library
 - **[gc-polyscope-project-template](https://github.com/nmwsharp/gc-polyscope-project-template/)** - Project foundation
 
----
 
-<div align="center">
-
-**Made with ❤️ at TU Delft**
-
-⭐ *If this project helped you, please consider giving it a star!* ⭐
-
-</div>
