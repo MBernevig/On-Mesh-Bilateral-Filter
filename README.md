@@ -92,13 +92,6 @@ The following dependencies are automatically managed by CMake:
 4. **🎨 Apply filtering** - Process your texture with the bilateral filter
 5. **👀 View results** - Load your newly generated texture image in a 3D visualization program to see results.
 
-### 🎯 Interactive Features
-
-- **Real-time visualization** of mesh and texture
-- **Parameter adjustment** for optimal filtering results
-- **Point sampling** with UV coordinate mapping
-- **Geodesic distance computation** for advanced analysis
-
 ---
 
 ## 🔬 Technical Overview
@@ -128,7 +121,7 @@ The implementation features a novel approach to texture filtering that operates 
 1. **Mesh Sampling**: Uses Poisson disk sampling to generate uniformly distributed points across the mesh surface
 2. **UV Mapping**: Each sample point maintains both 3D position and corresponding UV texture coordinates
 3. **Geodesic Distances**: Computes accurate surface distances using the heat method
-4. **Spatial-Range Filtering**: Applies bilateral filtering using both geometric proximity and color similarity
+4. **Spatial-Range Filtering**: Applies bilateral filtering using both geodesic distance and color similarity
 
 ### ⚙️ Key Parameters
 
@@ -185,25 +178,6 @@ On-Mesh-Bilateral-Filter/
 **Extend `src/utils/`** for new algorithms:
 - `image_filtering.cpp` - Add new filter types
 - `point_cloud_utils.cpp` - Enhance mesh processing utilities
-
----
-
-## 📊 Performance Notes
-
-- **Processing Time**: ~25 minutes for 256×256 texture with 65k samples (12 faces)
-- **Memory Usage**: Scales with mesh complexity and sampling density
-- **Optimization**: Consider multi-threading for large datasets
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please feel free to:
-
-- 🐛 **Report bugs** via GitHub Issues
-- 💡 **Suggest features** for enhanced functionality  
-- 🔀 **Submit pull requests** with improvements
-- 📚 **Improve documentation** and examples
 
 ---
 
